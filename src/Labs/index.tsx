@@ -3,12 +3,24 @@ import { Route, Routes, Navigate } from "react-router";
 import TOC from "./TOC";
 import Lab2 from "./Lab2";
 import Lab3 from "./Lab3";
+
 export default function Labs() {
     return (
         <div id="wd-labs">
             <h1>Labs</h1>
             <h2>Prisha Sujin Kumar</h2>
-
+<p>
+    Github!
+        <a
+          id="wd-github"
+          href="https://github.com/ppprisha/kambaz-react-web-app"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="ms-2"
+        >
+          kambaz-react-web-app
+        </a>
+      </p>
             <TOC />
             <Routes>
                 <Route path="/" element={<Navigate to="Lab1" />} />
