@@ -2,7 +2,7 @@
   {
     "_id": "A101",
     "title": "Propulsion Assignment",
-    "description": "Analyze various propulsion systems.",
+    "description": "blah",
     "points": 100,
     "group": "ASSIGNMENTS",
     "displayGradeAs": "Points",
@@ -14,7 +14,7 @@
   {
     "_id": "A102",
     "title": "Combustion Analysis",
-    "description": "Perform combustion calculations using given fuel data.",
+    "description": "blah",
     "points": 75,
     "group": "QUIZZES",
     "displayGradeAs": "Percentage",
@@ -26,7 +26,7 @@
   {
     "_id": "A103",
     "title": "Nozzle Design Project",
-    "description": "Design a rocket nozzle using simulation tools.",
+    "description": "blah",
     "points": 150,
     "group": "PROJECT",
     "displayGradeAs": "Points",
@@ -38,7 +38,7 @@
   {
     "_id": "A201",
     "title": "Aerodynamics Quiz",
-    "description": "Test on basic aerodynamic principles.",
+    "description": "blah",
     "points": 50,
     "group": "QUIZZES",
     "displayGradeAs": "Percentage",
@@ -50,7 +50,7 @@
   {
     "_id": "A202",
     "title": "Flow Analysis",
-    "description": "Analyze compressible flow in ducts.",
+    "description": "blah",
     "points": 80,
     "group": "ASSIGNMENTS",
     "displayGradeAs": "Points",
@@ -62,7 +62,7 @@
   {
     "_id": "A203",
     "title": "Heating Analysis",
-    "description": "Evaluate heat transfer in various configurations.",
+    "description": "blah",
     "points": 90,
     "group": "PROJECT",
     "displayGradeAs": "Points",
@@ -74,7 +74,7 @@
   {
     "_id": "A301",
     "title": "Structural Design Task",
-    "description": "Design and test a structural component.",
+    "description": "blah",
     "points": 100,
     "group": "EXAMS",
     "displayGradeAs": "Complete/Incomplete",
@@ -86,7 +86,7 @@
   {
     "_id": "A302",
     "title": "Orbital Calculations",
-    "description": "Calculate orbital transfers and maneuvers.",
+    "description": "blah",
     "points": 120,
     "group": "ASSIGNMENTS",
     "displayGradeAs": "Points",
@@ -98,7 +98,7 @@
   {
     "_id": "A303",
     "title": "Systems Engineering Exam",
-    "description": "Final exam on spacecraft systems.",
+    "description": "blah",
     "points": 200,
     "group": "EXAMS",
     "displayGradeAs": "Percentage",
