@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import * as db from "../Database";
 import { Button, FormControl } from "react-bootstrap";
-import { setCurrentUser } from "./reducer";
+// import { setCurrentUser } from "./reducer";
 
 export default function Signin() {
     const [credentials, setCredentials] = useState<any>({});
@@ -22,7 +22,7 @@ export default function Signin() {
         }
 
 
-        dispatch(setCurrentUser(user));
+        //dispatch(setCurrentUser(user));
 
         navigate("/Kambaz/Dashboard");
     };
