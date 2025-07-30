@@ -1,25 +1,24 @@
-import React, { useState } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
-import * as db from "./Database";
 import { Button, Card, Col, FormControl, Row } from "react-bootstrap";
 
-export default function Dashboard() {
-  const [courses, setCourses] = useState(db.courses);
-  const [course, setCourse] = useState<any>({
-    _id: "0",
-    name: "New Course",
-    number: "New Number",
-    startDate: "2023-09-10",
-    endDate: "2023-12-15",
-    image: "/images/reactjs.jpg",
-    description: "New Description",
-  });
-
-  const addNewCourse = () => {
-  const newCourse = { ...course, _id: Date.now().toString() };
-  setCourses([...courses, newCourse]);
+type DashboardProps = {
+  courses: any[];
+  course: any;
+  setCourse: React.Dispatch<React.SetStateAction<any>>;
+  addNewCourse: () => void;
+  deleteCourse: (courseId: string) => void;
+  updateCourse: () => void;
 };
 
+export default function Dashboard({
+  courses,
+  course,
+  setCourse,
+  addNewCourse,
+  deleteCourse,
+  updateCourse,
+}: DashboardProps) {
   return (
     <div id="wd-dashboard" className="p-4">
       <h1 id="wd-dashboard-title">Dashboard</h1>
@@ -40,7 +39,6 @@ export default function Dashboard() {
         className="mb-2"
         onChange={(e) => setCourse({ ...course, name: e.target.value })}
       />
-
       <FormControl
         as="textarea"
         value={course.description}
@@ -67,7 +65,7 @@ export default function Dashboard() {
                   className="wd-dashboard-course-link text-decoration-none text-dark"
                 >
                   <Card.Img
-                    src="/images/reactjs.jpg"
+                    src={course.image || "/images/reactjs.jpg"}
                     variant="top"
                     width="100%"
                     height={160}
@@ -93,4 +91,3 @@ export default function Dashboard() {
     </div>
   );
 }
-
