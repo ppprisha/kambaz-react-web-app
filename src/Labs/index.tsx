@@ -3,30 +3,24 @@ import { Route, Routes, Navigate } from "react-router";
 import TOC from "./TOC";
 import Lab2 from "./Lab2";
 import Lab3 from "./Lab3";
-
+import Lab4 from "./Lab4";
+import store from "./store";
+import { Provider } from "react-redux";
 export default function Labs() {
     return (
+        <Provider store={store}>
         <div id="wd-labs">
             <h1>Labs</h1>
             <h2>Prisha Sujin Kumar</h2>
-<p>
-    Github!
-        <a
-          id="wd-github"
-          href="https://github.com/ppprisha/kambaz-react-web-app"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="ms-2"
-        >
-          kambaz-react-web-app
-        </a>
-      </p>
+
             <TOC />
             <Routes>
                 <Route path="/" element={<Navigate to="Lab1" />} />
                 <Route path="Lab1" element={<Lab1 />} />
                 <Route path="Lab2/*" element={<Lab2 />} />
                 <Route path="Lab3/*" element={<Lab3 />} />
+                <Route path="Lab4/*" element={<Lab4 />} />
+
             </Routes>
             <Lab1 />
             <h3>HTML Examples</h3>
@@ -301,5 +295,6 @@ export default function Labs() {
         <a href="https://www.lipsum.com" id="wd-lipsum"> click here </a>
         to get dummy text<br/>
     </div>
+    </Provider>
     );
 }

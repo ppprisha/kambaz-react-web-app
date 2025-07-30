@@ -1,14 +1,19 @@
+import React from "react";
+import { useParams } from "react-router-dom";
 import { Table } from "react-bootstrap";
 import { FaUserCircle } from "react-icons/fa";
-import { useParams } from "react-router-dom";
+
 import * as db from "../../Database";
 
 export default function PeopleTable() {
-  const { cid } = useParams();
-  const { users, enrollment } = db;
+  const { cid } = useParams<{ cid: string }>();
 
-  const enrolledUsers = users.filter((user) =>
-    enrollment.some((enrollment) => enrollment.user === user._id && enrollment.course === cid)
+  const { users, enrollments } = db;
+
+  const filteredUsers = users.filter((user) =>
+    enrollments.some(
+      (enrollment) => enrollment.user === user._id && enrollment.course === cid
+    )
   );
 
   return (
@@ -25,12 +30,12 @@ export default function PeopleTable() {
           </tr>
         </thead>
         <tbody>
-          {enrolledUsers.map((user) => (
+          {filteredUsers.map((user) => (
             <tr key={user._id}>
               <td className="wd-full-name text-nowrap">
                 <FaUserCircle className="me-2 fs-1 text-secondary" />
-                <span className="wd-first-name">{user.firstName}</span>
-                <span className="wd-last-name"> {user.lastName}</span>
+                <span className="wd-first-name">{user.firstName}</span>{" "}
+                <span className="wd-last-name">{user.lastName}</span>
               </td>
               <td className="wd-login-id">{user.loginId}</td>
               <td className="wd-section">{user.section}</td>

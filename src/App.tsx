@@ -1,7 +1,6 @@
 import Labs from "./Labs";
 import Kambaz from "./Kambaz";
 import { HashRouter, Route, Routes, Navigate } from "react-router-dom";
-
 export default function App() {
   return (
     <HashRouter>

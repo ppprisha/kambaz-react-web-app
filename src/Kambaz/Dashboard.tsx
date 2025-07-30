@@ -1,106 +1,96 @@
-import { Row, Col, Card, Button } from "react-bootstrap";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import * as db from "./Database";
-
-import type { ReactElement, JSXElementConstructor, ReactNode, ReactPortal } from "react";
+import { Button, Card, Col, FormControl, Row } from "react-bootstrap";
 
 export default function Dashboard() {
-      const courses = db.courses;
+  const [courses, setCourses] = useState(db.courses);
+  const [course, setCourse] = useState<any>({
+    _id: "0",
+    name: "New Course",
+    number: "New Number",
+    startDate: "2023-09-10",
+    endDate: "2023-12-15",
+    image: "/images/reactjs.jpg",
+    description: "New Description",
+  });
+
+  const addNewCourse = () => {
+  const newCourse = { ...course, _id: Date.now().toString() };
+  setCourses([...courses, newCourse]);
+};
 
   return (
-    <div id="wd-dashboard" className="ps-md-5 pe-3 pt-3">
+    <div id="wd-dashboard" className="p-4">
       <h1 id="wd-dashboard-title">Dashboard</h1>
       <hr />
-      <h2 id="wd-dashboard-published">Published Courses ({courses.length})</h2>
+      <h5>
+        New Course
+        <button
+          className="btn btn-primary float-end"
+          id="wd-add-new-course-click"
+          onClick={addNewCourse}
+        >
+          Add
+        </button>
+      </h5>
+      <br />
+      <FormControl
+        value={course.name}
+        className="mb-2"
+        onChange={(e) => setCourse({ ...course, name: e.target.value })}
+      />
+
+      <FormControl
+        as="textarea"
+        value={course.description}
+        rows={3}
+        onChange={(e) => setCourse({ ...course, description: e.target.value })}
+      />
+      <hr />
+
+      <h2 id="wd-dashboard-published">
+        Published Courses ({courses.length})
+      </h2>
       <hr />
       <div id="wd-dashboard-courses">
-        <Row xs={1} sm={2} md={3} lg={4} xl={5} className="g-4">
-            {courses.map((course: { _id: any; name: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined; description: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined; }) => (
-          <><Col style={{ width: "270px" }}>
-                    <Card>
-                        <Link to={`/Kambaz/Courses/${course._id}/Home`}
-                            className="text-decoration-none text-dark">
-                            <Card.Img variant="top" src="/images/reactjs.png" height={160} />
-                            <Card.Body className="card-body">
-                                <Card.Title className="wd-dashboard-course-title text-nowrap overflow-hidden">
-                                    {course.name}</Card.Title>
-                                <Card.Text className="wd-dashboard-course-description overflow-hidden" style={{ height: "100px" }}>
-                                    {course.description}</Card.Text>
-                                <Button variant="primary">Go</Button>
-                            </Card.Body>
-                        </Link>
-                    </Card>
-                </Col><Col style={{ width: "270px" }}>
-                        <Card>
-                            <Link to="/Kambaz/Courses/1220/Home" className="text-decoration-none text-dark">
-                                <Card.Img variant="top" src="/images/angular.jpg" height={160} />
-                                <Card.Body>
-                                    <Card.Title>CS1220 Angular</Card.Title>
-                                    <Card.Text>Reactive web apps</Card.Text>
-                                    <Button variant="primary">Go</Button>
-                                </Card.Body>
-                            </Link>
-                        </Card>
-                    </Col><Col style={{ width: "270px" }}>
-                        <Card>
-                            <Link to="/Kambaz/Courses/4390/Home" className="text-decoration-none text-dark">
-                                <Card.Img variant="top" src="/images/csharpgame.jpg" height={160} />
-                                <Card.Body>
-                                    <Card.Title>CS4390 C# Unity</Card.Title>
-                                    <Card.Text>Unity C# game developer</Card.Text>
-                                    <Button variant="primary">Go</Button>
-                                </Card.Body>
-                            </Link>
-                        </Card>
-                    </Col><Col style={{ width: "270px" }}>
-                        <Card>
-                            <Link to="/Kambaz/Courses/3500/Home" className="text-decoration-none text-dark">
-                                <Card.Img variant="top" src="/images/iosswift.jpg" height={160} />
-                                <Card.Body>
-                                    <Card.Title>CS3500 iOS & Swift</Card.Title>
-                                    <Card.Text>iOS App Developer</Card.Text>
-                                    <Button variant="primary">Go</Button>
-                                </Card.Body>
-                            </Link>
-                        </Card>
-                    </Col><Col style={{ width: "270px" }}>
-                        <Card>
-                            <Link to="/Kambaz/Courses/4550/Home" className="text-decoration-none text-dark">
-                                <Card.Img variant="top" src="/images/unrealengine.jpg" height={160} />
-                                <Card.Body>
-                                    <Card.Title>CS4550 Unreal Engine 5</Card.Title>
-                                    <Card.Text>Epic Games C++ developer</Card.Text>
-                                    <Button variant="primary">Go</Button>
-                                </Card.Body>
-                            </Link>
-                        </Card>
-                    </Col><Col style={{ width: "270px" }}>
-                        <Card>
-                            <Link to="/Kambaz/Courses/3200/Home" className="text-decoration-none text-dark">
-                                <Card.Img variant="top" src="/images/sql.jpg" height={160} />
-                                <Card.Body>
-                                    <Card.Title>CS3200 SQL & MySQL</Card.Title>
-                                    <Card.Text>Data engineer</Card.Text>
-                                    <Button variant="primary">Go</Button>
-                                </Card.Body>
-                            </Link>
-                        </Card>
-                    </Col><Col style={{ width: "270px" }}>
-                        <Card>
-                            <Link to="/Kambaz/Courses/1500/Home" className="text-decoration-none text-dark">
-                                <Card.Img variant="top" src="/images/java.jpg" height={160} />
-                                <Card.Body>
-                                    <Card.Title>CS1500 Java</Card.Title>
-                                    <Card.Text>Java and OOP expert</Card.Text>
-                                    <Button variant="primary">Go</Button>
-                                </Card.Body>
-                            </Link>
-                        </Card>
-                    </Col></>
-                    ))}
-
+        <Row xs={1} md={5} className="g-4">
+          {courses.map((course) => (
+            <Col
+              key={course._id}
+              className="wd-dashboard-course"
+              style={{ width: "300px" }}
+            >
+              <Card>
+                <Link
+                  to={`/Kambaz/Courses/${course._id}/Home`}
+                  className="wd-dashboard-course-link text-decoration-none text-dark"
+                >
+                  <Card.Img
+                    src="/images/reactjs.jpg"
+                    variant="top"
+                    width="100%"
+                    height={160}
+                  />
+                  <Card.Body className="card-body">
+                    <Card.Title className="wd-dashboard-course-title text-nowrap overflow-hidden">
+                      {course.name}
+                    </Card.Title>
+                    <Card.Text
+                      className="wd-dashboard-course-description overflow-hidden"
+                      style={{ height: "100px" }}
+                    >
+                      {course.description}
+                    </Card.Text>
+                    <Button variant="primary">Go</Button>
+                  </Card.Body>
+                </Link>
+              </Card>
+            </Col>
+          ))}
         </Row>
       </div>
     </div>
   );
 }
+
