@@ -1,15 +1,15 @@
-import React from "react";
+import { Row, Col, Card, Button, FormControl } from "react-bootstrap";
 import { Link } from "react-router-dom";
-import { Button, Card, Col, FormControl, Row } from "react-bootstrap";
 
-type DashboardProps = {
+interface DashboardProps {
   courses: any[];
   course: any;
-  setCourse: React.Dispatch<React.SetStateAction<any>>;
+  setCourse: React.Dispatch<any>;
   addNewCourse: () => void;
   deleteCourse: (courseId: string) => void;
   updateCourse: () => void;
-};
+  editCourse: (c: any) => void;
+}
 
 export default function Dashboard({
   courses,
@@ -18,76 +18,71 @@ export default function Dashboard({
   addNewCourse,
   deleteCourse,
   updateCourse,
+  editCourse,
 }: DashboardProps) {
   return (
-    <div id="wd-dashboard" className="p-4">
+    <div id="wd-dashboard" className="ps-md-5 pe-3 pt-3">
       <h1 id="wd-dashboard-title">Dashboard</h1>
       <hr />
+
+      {/* Add/Edit Course Form */}
       <h5>
         New Course
-        <button
-          className="btn btn-primary float-end"
-          id="wd-add-new-course-click"
-          onClick={addNewCourse}
-        >
+        <Button className="float-end ms-2" onClick={updateCourse} variant="warning">
+          Update
+        </Button>
+        <Button className="float-end" onClick={addNewCourse} variant="primary">
           Add
-        </button>
+        </Button>
       </h5>
-      <br />
+
       <FormControl
         value={course.name}
+        placeholder="Course Name"
         className="mb-2"
         onChange={(e) => setCourse({ ...course, name: e.target.value })}
       />
       <FormControl
-        as="textarea"
         value={course.description}
+        as="textarea"
         rows={3}
+        placeholder="Course Description"
+        className="mb-3"
         onChange={(e) => setCourse({ ...course, description: e.target.value })}
       />
       <hr />
 
-      <h2 id="wd-dashboard-published">
-        Published Courses ({courses.length})
-      </h2>
+      {/* Courses List */}
+      <h2>Published Courses ({courses.length})</h2>
       <hr />
-      <div id="wd-dashboard-courses">
-        <Row xs={1} md={5} className="g-4">
-          {courses.map((course) => (
-            <Col
-              key={course._id}
-              className="wd-dashboard-course"
-              style={{ width: "300px" }}
-            >
-              <Card>
-                <Link
-                  to={`/Kambaz/Courses/${course._id}/Home`}
-                  className="wd-dashboard-course-link text-decoration-none text-dark"
-                >
-                  <Card.Img
-                    src={course.image || "/images/reactjs.jpg"}
-                    variant="top"
-                    width="100%"
-                    height={160}
-                  />
-                  <Card.Body className="card-body">
-                    <Card.Title className="wd-dashboard-course-title text-nowrap overflow-hidden">
-                      {course.name}
-                    </Card.Title>
-                    <Card.Text
-                      className="wd-dashboard-course-description overflow-hidden"
-                      style={{ height: "100px" }}
-                    >
-                      {course.description}
-                    </Card.Text>
-                    <Button variant="primary">Go</Button>
-                  </Card.Body>
-                </Link>
-              </Card>
-            </Col>
-          ))}
-        </Row>
-      </div>
+
+      <Row xs={1} sm={2} md={3} lg={4} xl={5} className="g-4">
+        {courses.map((c: any) => (
+          <Col key={c._id}>
+            <Card>
+              <Link to={`/Courses/${c._id}/Home`} className="text-decoration-none text-dark">
+                <Card.Img variant="top" src={c.image || "/images/reactjs.png"} height={160} />
+                <Card.Body>
+                  <Card.Title className="text-nowrap overflow-hidden">{c.name}</Card.Title>
+                  <Card.Text className="overflow-hidden" style={{ height: "100px" }}>
+                    {c.description}
+                  </Card.Text>
+                  <Button variant="primary">Go</Button>
+                </Card.Body>
+              </Link>
+
+              <div className="d-flex justify-content-between m-1">
+                <Button variant="warning" onClick={() => editCourse(c)}>
+                  Edit
+                </Button>
+                <Button variant="danger" onClick={() => deleteCourse(c._id)}>
+                  Delete
+                </Button>
+              </div>
+            </Card>
+          </Col>
+        ))}
+      </Row>
     </div>
   );
 }

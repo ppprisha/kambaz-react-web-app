@@ -8,7 +8,7 @@ import { useState } from "react";
 export default function Kambaz() {
   const [courses, setCourses] = useState<any[]>(db.courses);
   const [course, setCourse] = useState<any>({
-    _id: "1234",
+    _id: "0",
     name: "New Course",
     number: "New Number",
     startDate: "2023-09-10",
@@ -20,16 +20,30 @@ export default function Kambaz() {
   const addNewCourse = () => {
     const newId = Date.now().toString();
     setCourses([...courses, { ...course, _id: newId }]);
+    resetForm();
   };
 
   const deleteCourse = (courseId: string) => {
-    setCourses(courses.filter((course) => course._id !== courseId));
+    setCourses(courses.filter((c) => c._id !== courseId));
   };
 
   const updateCourse = () => {
-    setCourses(
-      courses.map((c) => (c._id === course._id ? course : c))
-    );
+    setCourses(courses.map((c) => (c._id === course._id ? { ...course } : c)));
+    resetForm();
+  };
+
+  const editCourse = (c: any) => setCourse({ ...c });
+
+  const resetForm = () => {
+    setCourse({
+      _id: "0",
+      name: "New Course",
+      number: "New Number",
+      startDate: "2023-09-10",
+      endDate: "2023-12-15",
+      description: "New Description",
+      image: "/images/reactjs.jpg",
+    });
   };
 
   return (
@@ -38,7 +52,6 @@ export default function Kambaz() {
       <div className="wd-main-content-offset p-3">
         <Routes>
           <Route path="/" element={<Navigate to="Dashboard" />} />
-          <Route path="Account" element={<h1>Account</h1>} />
           <Route
             path="Dashboard"
             element={
@@ -49,10 +62,14 @@ export default function Kambaz() {
                 addNewCourse={addNewCourse}
                 deleteCourse={deleteCourse}
                 updateCourse={updateCourse}
+                editCourse={editCourse}
               />
             }
           />
-          <Route path="Courses/:cid/*" element={<Courses courses={courses} />} />
+          <Route
+            path="Courses/:cid/*"
+            element={<Courses courses={courses} setCourse={setCourse} />}
+          />
         </Routes>
       </div>
     </div>
