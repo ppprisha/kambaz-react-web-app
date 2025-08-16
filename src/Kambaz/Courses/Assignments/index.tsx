@@ -4,12 +4,13 @@ import {
   BsThreeDotsVertical,
 } from "react-icons/bs";
 import { FaPlus, FaSearch, FaTrash } from "react-icons/fa";
-import GreenCheckmark from "../Modules/GreenCheckmark";
 import { BiBook } from "react-icons/bi";
+import GreenCheckmark from "../Modules/GreenCheckmark";
 import { useParams, useNavigate } from "react-router";
 import { useSelector, useDispatch } from "react-redux";
 import { useState } from "react";
 import { deleteAssignment } from "./reducer";
+import { Button, FormControl, InputGroup } from "react-bootstrap";
 
 function DeleteAssignmentModal({ onConfirm }: { onConfirm: () => void }) {
   return (
@@ -23,31 +24,18 @@ function DeleteAssignmentModal({ onConfirm }: { onConfirm: () => void }) {
         <div className="modal-content">
           <div className="modal-header">
             <h1 className="modal-title fs-5">Delete Assignment</h1>
-            <button
-              type="button"
-              className="btn-close"
-              data-bs-dismiss="modal"
-            ></button>
+            <button type="button" className="btn-close" data-bs-dismiss="modal" />
           </div>
           <div className="modal-body">
             Are you sure you want to delete this assignment?
           </div>
           <div className="modal-footer">
-            <button
-              type="button"
-              className="btn btn-secondary"
-              data-bs-dismiss="modal"
-            >
+            <Button variant="secondary" data-bs-dismiss="modal">
               Cancel
-            </button>
-            <button
-              type="button"
-              onClick={onConfirm}
-              data-bs-dismiss="modal"
-              className="btn btn-danger"
-            >
+            </Button>
+            <Button variant="danger" onClick={onConfirm} data-bs-dismiss="modal">
               Delete
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -58,15 +46,14 @@ function DeleteAssignmentModal({ onConfirm }: { onConfirm: () => void }) {
 export default function Assignments() {
   const { cid } = useParams();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { currentUser } = useSelector((state: any) => state.accountReducer);
   const assignments = useSelector(
     (state: any) => state.assignmentsReducer.assignments
   );
-  const { currentUser } = useSelector((state: any) => state.accountReducer);
-  const dispatch = useDispatch();
+
   const isFaculty = currentUser?.role === "FACULTY";
-  const [assignmentToDelete, setAssignmentToDelete] = useState<string | null>(
-    null
-  );
+  const [assignmentToDelete, setAssignmentToDelete] = useState<string | null>(null);
 
   const handleDeleteConfirm = () => {
     if (assignmentToDelete) {
@@ -77,37 +64,34 @@ export default function Assignments() {
 
   return (
     <div id="wd-assignments">
-      <div className="d-flex align-items-center justify-content-between">
-        <div className="d-flex" style={{ width: "200px" }}>
-          <div className="input-group">
-            <span className="input-group-text">
-              <FaSearch />
-            </span>
-            <input
-              type="text"
-              className="form-control"
-              placeholder="Search..."
-              id="wd-search-assignment"
-            />
-          </div>
-        </div>
+      <div className="d-flex align-items-center justify-content-between mb-3">
+        <InputGroup style={{ width: "200px" }}>
+          <InputGroup.Text>
+            <FaSearch />
+          </InputGroup.Text>
+          <FormControl placeholder="Search..." id="wd-search-assignment" />
+        </InputGroup>
+
         {isFaculty && (
           <div className="d-flex gap-2">
-            <button id="wd-add-assignment-group" className="btn btn-secondary">
-              <FaPlus className="position-relative" style={{ bottom: "1px" }} />
+            <Button id="wd-add-assignment-group" variant="secondary">
+              <FaPlus className="me-1" />
               Group
-            </button>
-            <button
+            </Button>
+            <Button
               id="wd-add-assignment"
-              className="btn btn-danger"
-              onClick={() => navigate(`/Kambaz/Courses/${cid}/Assignments/new`)}
+              variant="danger"
+              onClick={() =>
+                navigate(`/Kambaz/Courses/${cid}/Assignments/new`)
+              }
             >
-              <FaPlus className="position-relative" style={{ bottom: "1px" }} />
+              <FaPlus className="me-1" />
               Assignment
-            </button>
+            </Button>
           </div>
         )}
       </div>
+
       <ul id="wd-modules" className="list-group rounded-0 mt-4">
         <li className="wd-module list-group-item p-0 mb-5 fs-5 border-gray">
           <div className="wd-title p-3 ps-2 bg-secondary d-flex align-items-center justify-content-between">
@@ -121,18 +105,19 @@ export default function Assignments() {
                 <span className="border rounded-pill px-3 py-1 text-muted">
                   40% of Total
                 </span>
-                <button className="btn btn-link text-dark p-1 mx-1">
+                <Button variant="link" className="text-dark p-1 mx-1">
                   <FaPlus />
-                </button>
-                <button className="btn btn-link text-dark p-1 mx-1">
+                </Button>
+                <Button variant="link" className="text-dark p-1 mx-1">
                   <BsThreeDotsVertical />
-                </button>
+                </Button>
               </div>
             )}
           </div>
+
           <ul className="wd-lessons list-group rounded-0">
             {assignments
-              .filter((assignment: any) => assignment.course === cid)
+              .filter((a: any) => a.course === cid)
               .map((assignment: any) => (
                 <li
                   key={assignment._id}
@@ -154,27 +139,27 @@ export default function Assignments() {
                         {assignment.available_from} |
                       </div>
                       <div className="text-muted">
-                        <strong>Available Until</strong>{" "}
-                        {assignment.available_until} | <strong>Due</strong>{" "}
-                        {assignment.due_date} | {assignment.points} pts
+                        <strong>Available Until</strong> {assignment.available_until} |{" "}
+                        <strong>Due</strong> {assignment.due_date} | {assignment.points} pts
                       </div>
-                      <div className="text-muted"></div>
                     </div>
                   </div>
+
                   {isFaculty && (
                     <div className="d-flex align-items-center">
                       <GreenCheckmark />
-                      <button
-                        className="btn btn-link text-dark p-1"
+                      <Button
+                        variant="link"
+                        className="text-dark p-1"
                         data-bs-toggle="modal"
                         data-bs-target="#wd-delete-assignment-dialog"
                         onClick={() => setAssignmentToDelete(assignment._id)}
                       >
                         <FaTrash />
-                      </button>
-                      <button className="btn btn-link text-dark p-1">
+                      </Button>
+                      <Button variant="link" className="text-dark p-1">
                         <BsThreeDotsVertical className="text-muted" />
-                      </button>
+                      </Button>
                     </div>
                   )}
                 </li>
@@ -182,6 +167,7 @@ export default function Assignments() {
           </ul>
         </li>
       </ul>
+
       {isFaculty && <DeleteAssignmentModal onConfirm={handleDeleteConfirm} />}
     </div>
   );

@@ -4,12 +4,12 @@ import Dashboard from "./Dashboard";
 import KambazNavigation from "./Navigation";
 import Courses from "./Courses";
 import "./styles.css";
-import ProtectedRoute from "./Account/ProtectedRoute";
-import ProtectedCourseRoute from "./Courses/ProtectedCourseRoute";
+import ProtectedRoute from "./Account/ProtectedRoute"; 
 import { useSelector } from "react-redux";
 
 export default function Kambaz() {
   const courses = useSelector((state: any) => state.courseReducer.courses);
+
   return (
     <div id="wd-kambaz">
       <KambazNavigation />
@@ -27,11 +27,7 @@ export default function Kambaz() {
           />
           <Route
             path="/Courses/:cid/*"
-            element={
-              <ProtectedCourseRoute>
-                <Courses courses={courses} />
-              </ProtectedCourseRoute>
-            }
+            element={<Courses courses={courses} />}
           />
           <Route path="/Calendar" element={<h1>Calendar</h1>} />
           <Route path="/Inbox" element={<h1>Inbox</h1>} />
