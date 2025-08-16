@@ -1,88 +1,134 @@
-import { Row, Col, Card, Button, FormControl } from "react-bootstrap";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+import { enroll, unenroll } from "./reducer";
+import { addCourse, deleteCourse, updateCourse } from "./Courses/reducer";
 
-interface DashboardProps {
-  courses: any[];
-  course: any;
-  setCourse: React.Dispatch<any>;
-  addNewCourse: () => void;
-  deleteCourse: (courseId: string) => void;
-  updateCourse: () => void;
-  editCourse: (c: any) => void;
-}
+export default function Dashboard() {
+  const dispatch = useDispatch();
+  const courses = useSelector((state: any) => state.courseReducer.courses);
+  const { currentUser } = useSelector((state: any) => state.accountReducer);
+  const { enrollments } = useSelector((state: any) => state.enrollmentReducer);
 
-export default function Dashboard({
-  courses,
-  course,
-  setCourse,
-  addNewCourse,
-  deleteCourse,
-  updateCourse,
-  editCourse,
-}: DashboardProps) {
+  const [showAll, setShowAll] = useState(false);
+  const [courseForm, setCourseForm] = useState({
+    _id: "0",
+    name: "New Course",
+    number: "New Number",
+    startDate: "2023-09-10",
+    endDate: "2023-12-15",
+    image: "/images/reactjs.jpg",
+    description: "New Description",
+  });
+
+  const handleCourseFormChange = (field: string, value: string) => {
+    setCourseForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleEnrollToggle = (courseId: string) => {
+    const isEnrolled = enrollments.some(
+      (enrollment) => enrollment.user === currentUser?._id && enrollment.course === courseId
+    );
+    dispatch(isEnrolled ? unenroll({ user: currentUser?._id, course: courseId }) : enroll({ user: currentUser?._id, course: courseId }));
+  };
+
+  const handleAddOrUpdate = () => {
+    if (courseForm._id === "0") {
+      dispatch(addCourse(courseForm));
+      dispatch(enroll({ user: currentUser?._id, course: courseForm._id }));
+    } else {
+      dispatch(updateCourse(courseForm));
+    }
+    setCourseForm({
+      _id: "0",
+      name: "New Course",
+      number: "New Number",
+      startDate: "2023-09-10",
+      endDate: "2023-12-15",
+      image: "/images/reactjs.jpg",
+      description: "New Description",
+    });
+  };
+
+  const handleEditCourse = (course: any) => setCourseForm(course);
+
+  const filteredCourses = showAll
+    ? courses
+    : courses.filter((course) =>
+        enrollments.some((enr) => enr.user === currentUser?._id && enr.course === course._id)
+      );
+
   return (
-    <div id="wd-dashboard" className="ps-md-5 pe-3 pt-3">
+    <div id="wd-dashboard">
       <h1 id="wd-dashboard-title">Dashboard</h1>
       <hr />
 
-      {/* Add/Edit Course Form */}
-      <h5>
-        New Course
-        <Button className="float-end ms-2" onClick={updateCourse} variant="warning">
-          Update
-        </Button>
-        <Button className="float-end" onClick={addNewCourse} variant="primary">
-          Add
-        </Button>
-      </h5>
+      {/* Course Form */}
+      <div className="mb-3">
+        <input
+          value={courseForm.name}
+          className="form-control mb-2"
+          placeholder="Course Name"
+          onChange={(e) => handleCourseFormChange("name", e.target.value)}
+        />
+        <textarea
+          value={courseForm.description}
+          className="form-control mb-2"
+          placeholder="Course Description"
+          onChange={(e) => handleCourseFormChange("description", e.target.value)}
+        />
+        <button className="btn btn-primary me-2" onClick={handleAddOrUpdate}>
+          {courseForm._id === "0" ? "Add Course" : "Update Course"}
+        </button>
+      </div>
 
-      <FormControl
-        value={course.name}
-        placeholder="Course Name"
-        className="mb-2"
-        onChange={(e) => setCourse({ ...course, name: e.target.value })}
-      />
-      <FormControl
-        value={course.description}
-        as="textarea"
-        rows={3}
-        placeholder="Course Description"
-        className="mb-3"
-        onChange={(e) => setCourse({ ...course, description: e.target.value })}
-      />
-      <hr />
+      {/* Toggle View */}
+      <button className="btn btn-secondary mb-3" onClick={() => setShowAll((prev) => !prev)}>
+        {showAll ? "Show My Courses" : "Show All Courses"}
+      </button>
 
-      {/* Courses List */}
-      <h2>Published Courses ({courses.length})</h2>
-      <hr />
+      {/* Courses */}
+      <div className="row row-cols-1 row-cols-md-5 g-4">
+        {filteredCourses.map((course) => {
+          const isEnrolled = enrollments.some(
+            (enr) => enr.user === currentUser?._id && enr.course === course._id
+          );
 
-      <Row xs={1} sm={2} md={3} lg={4} xl={5} className="g-4">
-        {courses.map((c: any) => (
-          <Col key={c._id}>
-            <Card>
-              <Link to={`/Courses/${c._id}/Home`} className="text-decoration-none text-dark">
-                <Card.Img variant="top" src={c.image || "/images/reactjs.png"} height={160} />
-                <Card.Body>
-                  <Card.Title className="text-nowrap overflow-hidden">{c.name}</Card.Title>
-                  <Card.Text className="overflow-hidden" style={{ height: "100px" }}>
-                    {c.description}
-                  </Card.Text>
-                  <Button variant="primary">Go</Button>
-                </Card.Body>
-              </Link>
+          return (
+            <div key={course._id} className="col wd-dashboard-course" style={{ width: "300px" }}>
+              <div className="card rounded-3 overflow-hidden">
+                <Link to={`/Kambaz/Courses/${course._id}/Home`} className="text-decoration-none text-dark">
+                  <img src={course.image || "/images/reactjs.jpg"} width="100%" height={160} alt={course.name} />
+                  <div className="card-body">
+                    <h5 className="card-title">{course.name.substring(0, 20)}</h5>
+                    <p className="card-text" style={{ maxHeight: 100 }}>
+                      {course.description.substring(0, 50)}
+                    </p>
+                  </div>
+                </Link>
 
-              <div className="d-flex justify-content-between m-1">
-                <Button variant="warning" onClick={() => editCourse(c)}>
-                  Edit
-                </Button>
-                <Button variant="danger" onClick={() => deleteCourse(c._id)}>
-                  Delete
-                </Button>
+                <div className="card-footer d-flex justify-content-between">
+                  <button
+                    className={`btn ${isEnrolled ? "btn-danger" : "btn-success"}`}
+                    onClick={() => handleEnrollToggle(course._id)}
+                  >
+                    {isEnrolled ? "Unenroll" : "Enroll"}
+                  </button>
+
+                  <div>
+                    <button className="btn btn-warning me-2" onClick={() => handleEditCourse(course)}>
+                      Edit
+                    </button>
+                    <button className="btn btn-danger" onClick={() => dispatch(deleteCourse(course._id))}>
+                      Delete
+                    </button>
+                  </div>
+                </div>
               </div>
-            </Card>
-          </Col>
-        ))}
-      </Row>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

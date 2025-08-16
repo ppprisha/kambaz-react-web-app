@@ -1,75 +1,40 @@
-import Navigation from "./Navigation";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router";
+import Account from "./Account";
 import Dashboard from "./Dashboard";
+import KambazNavigation from "./Navigation";
 import Courses from "./Courses";
-import * as db from "./Database";
-import { useState } from "react";
+import "./styles.css";
+import ProtectedRoute from "./Account/ProtectedRoute";
+import ProtectedCourseRoute from "./Courses/ProtectedCourseRoute";
+import { useSelector } from "react-redux";
 
 export default function Kambaz() {
-  const [courses, setCourses] = useState<any[]>(db.courses);
-  const [course, setCourse] = useState<any>({
-    _id: "0",
-    name: "New Course",
-    number: "New Number",
-    startDate: "2023-09-10",
-    endDate: "2023-12-15",
-    description: "New Description",
-    image: "/images/reactjs.jpg",
-  });
-
-  const addNewCourse = () => {
-    const newId = Date.now().toString();
-    setCourses([...courses, { ...course, _id: newId }]);
-    resetForm();
-  };
-
-  const deleteCourse = (courseId: string) => {
-    setCourses(courses.filter((c) => c._id !== courseId));
-  };
-
-  const updateCourse = () => {
-    setCourses(courses.map((c) => (c._id === course._id ? { ...course } : c)));
-    resetForm();
-  };
-
-  const editCourse = (c: any) => setCourse({ ...c });
-
-  const resetForm = () => {
-    setCourse({
-      _id: "0",
-      name: "New Course",
-      number: "New Number",
-      startDate: "2023-09-10",
-      endDate: "2023-12-15",
-      description: "New Description",
-      image: "/images/reactjs.jpg",
-    });
-  };
-
+  const courses = useSelector((state: any) => state.courseReducer.courses);
   return (
     <div id="wd-kambaz">
-      <Navigation />
+      <KambazNavigation />
       <div className="wd-main-content-offset p-3">
         <Routes>
-          <Route path="/" element={<Navigate to="Dashboard" />} />
+          <Route path="/" element={<Navigate to="Account" />} />
+          <Route path="/Account/*" element={<Account />} />
           <Route
-            path="Dashboard"
+            path="/Dashboard"
             element={
-              <Dashboard
-                courses={courses}
-                course={course}
-                setCourse={setCourse}
-                addNewCourse={addNewCourse}
-                deleteCourse={deleteCourse}
-                updateCourse={updateCourse}
-                editCourse={editCourse}
-              />
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
             }
           />
           <Route
-            path="Courses/:cid/*"
-            element={<Courses courses={courses} setCourse={setCourse} />}
+            path="/Courses/:cid/*"
+            element={
+              <ProtectedCourseRoute>
+                <Courses courses={courses} />
+              </ProtectedCourseRoute>
+            }
           />
+          <Route path="/Calendar" element={<h1>Calendar</h1>} />
+          <Route path="/Inbox" element={<h1>Inbox</h1>} />
         </Routes>
       </div>
     </div>
