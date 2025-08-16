@@ -1,82 +1,102 @@
-import { useParams } from "react-router";
+import React, { useState } from "react";
+import { useParams, Link } from "react-router-dom";
 import * as db from "../../Database";
+import { Button, Form } from "react-bootstrap";
 
-export default function Assignments() {
-  const { cid } = useParams();
-  const courseAssignments = db.assignments.filter((a) => a.course === cid);
+interface Assignment {
+  _id: string;
+  course: string;
+  title: string;
+  description: string;
+  points: number;
+  dueDate: string;
+  availableFrom: string;
+  availableUntil: string;
+}
+
+export default function AssignmentEditor() {
+  const { cid, aid } = useParams();
+  const assignment = db.assignments.find(
+    (a: Assignment) => a._id === aid && a.course === cid
+  );
+
+  if (!assignment) {
+    return <div>Assignment not found</div>;
+  }
+
+  const [formData, setFormData] = useState<Assignment>({ ...assignment });
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value } as Assignment);
+  };
 
   return (
-    <div id="wd-assignments">
-      <input placeholder="Search for Assignments" id="wd-search-assignment" />
-      <button id="wd-add-assignment-group">+ Group</button>
-      <button id="wd-add-assignment">+ Assignment</button>
-      <button id="wd-add-quiz">+ Quiz</button>
+    <div id="wd-assignment-editor" className="p-4">
+      <h2>{assignment.title}</h2>
+      <Form>
+        <Form.Group className="mb-3">
+          <Form.Label>Description</Form.Label>
+          <Form.Control
+            as="textarea"
+            rows={5}
+            name="description"
+            value={formData.description}
+            onChange={handleChange}
+          />
+        </Form.Group>
 
-      <h3 id="wd-assignments-title">
-        ASSIGNMENTS 40% of Total <button>+</button>
-      </h3>
-      <ul id="wd-assignment-list">
-        {courseAssignments.map((assignment) => (
-          <li className="wd-assignment-list-item" key={assignment._id}>
-            <a
-              href={`#/Kambaz/Courses/${cid}/Assignments/${assignment._id}`}
-              className="wd-assignment-link"
-            >
-              {assignment.title}
-            </a>
-          </li>
-        ))}
-      </ul>
+        <Form.Group className="mb-3">
+          <Form.Label>Points</Form.Label>
+          <Form.Control
+            type="number"
+            name="points"
+            value={formData.points}
+            onChange={handleChange}
+          />
+        </Form.Group>
 
-      <h3 id="wd-quizzes-title">
-        QUIZZES 10% of Total <button>+</button>
-      </h3>
-      <ul id="wd-quiz-list">
-        <li className="wd-quiz-list-item">
-          <a
-            href={`#/Kambaz/Courses/${cid}/Quizzes/123`}
-            className="wd-quiz-link"
-          >
-            Q1 - BASICS
-          </a>
-        </li>
-      </ul>
+        <Form.Group className="mb-3">
+          <Form.Label>Available From</Form.Label>
+          <Form.Control
+            type="date"
+            name="availableFrom"
+            value={formData.availableFrom}
+            onChange={handleChange}
+          />
+        </Form.Group>
 
-      <h3 id="wd-quizzes-title">
-        PROJECT 30% of Total <button>+</button>
-      </h3>
-      <ul id="wd-projects-list">
-        <li className="wd-projects-list-item">
-          <a
-            href={`#/Kambaz/Courses/${cid}/Projects/123`}
-            className="wd-project-link"
-          >
-            PROJECT
-          </a>
-        </li>
-      </ul>
+        <Form.Group className="mb-3">
+          <Form.Label>Available Until</Form.Label>
+          <Form.Control
+            type="date"
+            name="availableUntil"
+            value={formData.availableUntil}
+            onChange={handleChange}
+          />
+        </Form.Group>
 
-      <h3 id="wd-quizzes-title">
-        EXAMS 20% of Total <button>+</button>
-      </h3>
-      <ul id="wd-exams-list">
-        <li className="wd-exam-list-item">
-          <a
-            href={`#/Kambaz/Courses/${cid}/Exams/1`}
-            className="wd-exam-link"
-          >
-            Exam 1
-          </a>
-        </li>
-        <li className="wd-exam-list-item">
-          <a
-            href={`#/Kambaz/Courses/${cid}/Exams/2`}
-            className="wd-exam-link"
-          >
-            Exam 2
-          </a>
-        </li>
-      </ul>
+        <Form.Group className="mb-3">
+          <Form.Label>Due Date</Form.Label>
+          <Form.Control
+            type="date"
+            name="dueDate"
+            value={formData.dueDate}
+            onChange={handleChange}
+          />
+        </Form.Group>
+
+        <div className="d-flex gap-2">
+          <Link to={`/Kambaz/Courses/${cid}/Assignments`}>
+            <Button variant="secondary">Cancel</Button>
+          </Link>
+          <Link to={`/Kambaz/Courses/${cid}/Assignments`}>
+            <Button variant="primary">Save</Button>
+          </Link>
+        </div>
+      </Form>
     </div>
   );
 }
