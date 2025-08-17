@@ -6,27 +6,28 @@ const initialState = {
   courses: db.courses,
 };
 
-const coursesSlice = createSlice({
+const courseSlice = createSlice({
   name: "courses",
   initialState,
   reducers: {
-    addCourse: (state, { payload: course }) => {
-      const newCourse: any = {
-        _id: uuidv4(),
-        ...course,
-      };
-      state.courses = [...state.courses, newCourse] as any;
+    addCourse: (state, { payload }) => {
+      const newCourse = { ...payload, _id: uuidv4() };
+      state.courses = [...state.courses, newCourse];
     },
     deleteCourse: (state, { payload: courseId }) => {
-      state.courses = state.courses.filter((c: any) => c._id !== courseId);
+      state.courses = state.courses.filter((course) => course._id !== courseId);
     },
-    updateCourse: (state, { payload: course }) => {
-      state.courses = state.courses.map((c: any) =>
-        c._id === course._id ? course : c
-      ) as any;
+    updateCourse: (state, { payload }) => {
+      state.courses = state.courses.map((course) =>
+        course._id === payload._id ? payload : course
+      );
+    },
+    setCourses: (state, { payload }) => {
+      state.courses = payload;
     },
   },
 });
 
-export const { addCourse, deleteCourse, updateCourse } = coursesSlice.actions;
-export default coursesSlice.reducer;
+export const { addCourse, deleteCourse, updateCourse, setCourses } =
+  courseSlice.actions;
+export default courseSlice.reducer;

@@ -2,30 +2,39 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { setCurrentUser } from "./reducer";
-import * as db from "../Database";
+
 import { FormControl, Button } from "react-bootstrap";
+import * as client from "./client";
 
 export default function Signin() {
   const [credentials, setCredentials] = useState<any>({});
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const signin = () => {
-    const user = db.users.find(
-      (u: any) =>
-        u.username === credentials.username &&
-        u.password === credentials.password
-    );
-    if (!user) return;
-    dispatch(setCurrentUser(user));
-    navigate("/Kambaz/Dashboard");
+  const signin = async () => {
+    try {
+      const user = await client.signin(credentials);
+      console.log("Signin response:", user);
+
+      if (!user || !user._id) {
+        alert("Invalid credentials or server didn’t return a user");
+        return;
+      }
+
+      dispatch(setCurrentUser(user));
+      navigate("/Kambaz/Dashboard");
+    } catch (err) {
+      console.error("Signin failed:", err);
+    }
   };
+
+
 
   return (
     <div id="wd-signin-screen">
       <h1>Sign in</h1>
       <FormControl
-        defaultValue={credentials.username}
+        value={credentials.username || ""}
         onChange={(e) =>
           setCredentials({ ...credentials, username: e.target.value })
         }
@@ -34,7 +43,7 @@ export default function Signin() {
         id="wd-username"
       />
       <FormControl
-        defaultValue={credentials.password}
+        value={credentials.password || ""}
         onChange={(e) =>
           setCredentials({ ...credentials, password: e.target.value })
         }
@@ -43,6 +52,7 @@ export default function Signin() {
         type="password"
         id="wd-password"
       />
+
       <Button onClick={signin} id="wd-signin-btn" className="w-100">
         Sign in
       </Button>
