@@ -1,12 +1,14 @@
 import axios from "axios";
+
 const REMOTE_SERVER = import.meta.env.VITE_REMOTE_SERVER;
-const COURSES_API = `${REMOTE_SERVER}/api/courses`;
+if (!REMOTE_SERVER) throw new Error("VITE_REMOTE_SERVER not set! Check Netlify env variables.");
+
+const axiosClient = axios.create({
+  baseURL: REMOTE_SERVER,
+});
+
 export const fetchAllCourses = async () => {
-  const { data } = await axios.get(COURSES_API);
+  const { data } = await axiosClient.get("/api/courses");
   return data;
 };
-
-export function createCourse(course: any) {
-  throw new Error("Function not implemented.");
-}
 
