@@ -5,7 +5,7 @@ export default function Lab3() {
     const { todos } = useSelector((state: any) => state.todosReducer);
   return (
     <div id="wd-lab3">
-      <h2>Lab 3</h2>
+      <h2>Lab 3!</h2>
        <ListGroup>
         {todos.map((todo: any) => (
           <ListGroup.Item key={todo.id}>
