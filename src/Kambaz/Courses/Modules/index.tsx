@@ -1,81 +1,115 @@
-import React, { useState } from "react";
-import { Container, ListGroup } from "react-bootstrap";
 import { BsGripVertical } from "react-icons/bs";
-import { useParams } from "react-router";
-import { useSelector, useDispatch } from "react-redux";
 import ModulesControls from "./ModulesControls";
 import ModuleControlButtons from "./ModuleControlButtons";
 import LessonControlButtons from "./LessonControlButtons";
-import { addModule, updateModule, deleteModule, editModule } from "./reducer";
+import { useParams } from "react-router";
+import { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  setModules,
+  addModule,
+  editModule,
+  updateModule,
+  deleteModule,
+} from "./reducer";
+import * as coursesClient from "../client";
+import * as modulesClient from "./client";
 
 export default function Modules() {
   const { cid } = useParams();
-  const dispatch = useDispatch();
   const { modules } = useSelector((state: any) => state.modulesReducer);
-  const [moduleName, setModuleName] = useState("");
+  const { currentUser } = useSelector((state: any) => state.accountReducer);
+  const dispatch = useDispatch();
+  const createModuleForCourse = async () => {
+    if (!cid) return;
+    const newModule = { name: moduleName, course: cid };
+    const module = await coursesClient.createModuleForCourse(cid, newModule);
+    dispatch(addModule(module));
+    setModuleName("");
+  };
 
-  const courseModules = modules.filter((m: any) => m.course === cid);
+  const [moduleName, setModuleName] = useState("");
+  const fetchModules = async () => {
+    const modules = await coursesClient.findModulesForCourse(cid as string);
+    dispatch(setModules(modules));
+  };
+  useEffect(() => {
+    fetchModules();
+  }, [cid]);
+  const removeModule = async (moduleId: string) => {
+    await modulesClient.deleteModule(moduleId);
+    dispatch(deleteModule(moduleId));
+  };
+
+  const saveModule = async (module: any) => {
+    await modulesClient.updateModule(module);
+    dispatch(updateModule(module));
+  };
+
+  const isFaculty = currentUser?.role === "FACULTY";
 
   return (
-    <Container>
-      <ModulesControls
-        moduleName={moduleName}
-        setModuleName={setModuleName}
-        addModule={() =>
-          dispatch(addModule({ name: moduleName, course: cid }))
-        }
-      />
+    <div>
+      {isFaculty && (
+        <ModulesControls
+          setModuleName={setModuleName}
+          moduleName={moduleName}
+          addModule={createModuleForCourse}
+        />
+      )}
 
       <br />
-      <ListGroup className="rounded-0" id="wd-modules">
-        {courseModules.map((module: any) => (
-          <ListGroup.Item
+      <br />
+      <br />
+      <br />
+      <ul id="wd-modules" className="list-group rounded-0">
+        {modules.map((module: any) => (
+          <li
             key={module._id}
-            className="wd-module p-0 mb-5 fs-5 border border-secondary rounded"
+            className="wd-module list-group-item p-0 mb-5 fs-5 border-gray"
           >
-            <div className="wd-title p-3 ps-2 bg-secondary d-flex align-items-center justify-content-between">
-              <div className="d-flex align-items-center text-white">
-                <BsGripVertical className="me-2 fs-3" />
-                {!module.editing && module.name}
-                {module.editing && (
-                  <input
-                    className="form-control w-50 d-inline-block"
-                    defaultValue={module.name}
-                    onChange={(e) =>
-                      dispatch(updateModule({ ...module, name: e.target.value }))
+            <div className="wd-title p-3 ps-2 bg-secondary">
+              <BsGripVertical className="me-2 fs-3" />{" "}
+              {!module.editing && module.name}
+              {isFaculty && module.editing && (
+                <input
+                  className="form-control w-50 d-inline-block"
+                  onChange={(e) =>
+                    dispatch(updateModule({ ...module, name: e.target.value }))
+                  }
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      saveModule({ ...module, editing: false });
                     }
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        dispatch(updateModule({ ...module, editing: false }));
-                      }
-                    }}
-                  />
-                )}
-              </div>
-              <ModuleControlButtons
-                editModule={() => dispatch(editModule(module._id))}
-                deleteModule={() => dispatch(deleteModule(module._id))} moduleId={""}              />
+                  }}
+                  defaultValue={module.name}
+                />
+              )}
+              {isFaculty && (
+                <ModuleControlButtons
+                  moduleId={module._id}
+                  deleteModule={(moduleId) => removeModule(moduleId)}
+                  editModule={(moduleId) => dispatch(editModule(moduleId))}
+                />
+              )}
             </div>
 
-            {module.lessons?.length > 0 && (
-              <ListGroup className="wd-lessons rounded-0">
+            {module.lessons && (
+              <ul className="wd-lessons list-group rounded-0">
                 {module.lessons.map((lesson: any) => (
-                  <ListGroup.Item
+                  <li
                     key={lesson._id}
-                    className="wd-lesson p-3 ps-1 d-flex justify-content-between align-items-start border-bottom"
+                    className="wd-lesson list-group-item p-3 ps-1"
                   >
-                    <div className="d-flex align-items-center">
-                      <BsGripVertical className="me-2 fs-3 mt-1" />
-                      <div>{lesson.name}</div>
-                    </div>
-                    <LessonControlButtons />
-                  </ListGroup.Item>
+                    <BsGripVertical className="me-2 fs-3" /> {lesson.name}{" "}
+                    {isFaculty && <LessonControlButtons />}
+                  </li>
                 ))}
-              </ListGroup>
+              </ul>
             )}
-          </ListGroup.Item>
+          </li>
         ))}
-      </ListGroup>
-    </Container>
+      </ul>
+    </div>
   );
 }

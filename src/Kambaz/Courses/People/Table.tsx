@@ -1,22 +1,18 @@
-import React from "react";
-import { useParams } from "react-router-dom";
-import { Table } from "react-bootstrap";
 import { FaUserCircle } from "react-icons/fa";
-import * as db from "../../Database";
+import PeopleDetails from "./Details";
+import { Link } from "react-router";
 
-export default function PeopleTable() {
-  const { cid } = useParams<{ cid: string }>();
-  const { users, enrollments } = db;
-
-  const filteredUsers = users.filter((user) =>
-    enrollments.some(
-      (enrollment) => enrollment.user === user._id && enrollment.course === cid
-    )
-  );
-
+export default function PeopleTable({
+  users = [],
+  disableLinks = false,
+}: {
+  users?: any[];
+  disableLinks?: boolean;
+}) {
   return (
     <div id="wd-people-table">
-      <Table striped>
+      <PeopleDetails />
+      <table className="table table-striped">
         <thead>
           <tr>
             <th>Name</th>
@@ -28,12 +24,25 @@ export default function PeopleTable() {
           </tr>
         </thead>
         <tbody>
-          {filteredUsers.map((user) => (
+          {users.map((user: any) => (
             <tr key={user._id}>
               <td className="wd-full-name text-nowrap">
-                <FaUserCircle className="me-2 fs-1 text-secondary" />
-                <span className="wd-first-name">{user.firstName}</span>{" "}
-                <span className="wd-last-name">{user.lastName}</span>
+                {disableLinks ? (
+                  <>
+                    <FaUserCircle className="me-2 fs-1 text-secondary" />
+                    <span className="wd-first-name">{user.firstName}</span>{" "}
+                    <span className="wd-last-name">{user.lastName}</span>
+                  </>
+                ) : (
+                  <Link
+                    to={`/Kambaz/Account/Users/${user._id}`}
+                    className="text-decoration-none"
+                  >
+                    <FaUserCircle className="me-2 fs-1 text-secondary" />
+                    <span className="wd-first-name">{user.firstName}</span>{" "}
+                    <span className="wd-last-name">{user.lastName}</span>
+                  </Link>
+                )}
               </td>
               <td className="wd-login-id">{user.loginId}</td>
               <td className="wd-section">{user.section}</td>
@@ -43,7 +52,7 @@ export default function PeopleTable() {
             </tr>
           ))}
         </tbody>
-      </Table>
+      </table>
     </div>
   );
 }
