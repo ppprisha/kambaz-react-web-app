@@ -1,325 +1,272 @@
-import { BsCalendar2Date } from "react-icons/bs";
-import { Link, useLocation, useParams, useNavigate } from "react-router";
-import { useSelector, useDispatch } from "react-redux";
+import Form from "react-bootstrap/Form";
+import { useParams, useNavigate } from "react-router";
+import { useDispatch, useSelector } from "react-redux";
+import { addAssignment, updateAssignment, setAssignments } from "./reducer";
 import { useState, useEffect } from "react";
-import * as assignmentClient from "./client";
-import { addAssignment, updateAssignment } from "./reducer";
-import { v4 as uuidv4 } from "uuid";
+import * as assignmentsClient from "./client";
 
 export default function AssignmentEditor() {
-  const { aid, cid } = useParams();
-  const location = useLocation();
-  const navigate = useNavigate();
-  const { currentUser } = useSelector((state: any) => state.accountReducer);
-  const isFaculty = currentUser?.role === "FACULTY";
-  const assignments = useSelector(
-    (state: any) => state.assignmentsReducer.assignments
-  );
-  const dispatch = useDispatch();
-  const isNew = aid === "new";
-  const [assignment, setAssignment] = useState({
-    _id: "",
-    title: "",
-    description: "",
-    points: 0,
-    due_date: "",
-    available_from: "",
-    available_until: "",
-    group: "",
-    submission_type: "",
-    display_grade_as: "",
-    assign_to: "",
-    course: cid,
-  });
-  useEffect(() => {
-    if (!isNew) {
-      const existing = assignments.find((a: any) => a._id === aid);
-      if (existing) {
-        setAssignment(existing);
-      }
-    }
-  }, [aid, assignments, isNew]);
-  const getAssignmentsUrl = () => {
-    const pathSegments = location.pathname.split("/");
-    pathSegments.pop();
-    return pathSegments.join("/");
-  };
+    const { cid, aid } = useParams();
+    const navigate = useNavigate();
+    const dispatch = useDispatch();
+    const { assignments } = useSelector((state: any) => state.assignmentsReducer);
+    
+    const existingAssignment = aid ? assignments.find((a: any) => a._id === aid) : null;
+    const isEditing = !!aid && !!existingAssignment;
 
-  const saveAssignment = async () => {
-    if (isNew) {
-      const newAssignment = { ...assignment, _id: uuidv4() };
-      const created = await assignmentClient.createAssignment(newAssignment);
-      dispatch(addAssignment(created));
-    } else {
-      const updated = await assignmentClient.updateAssignment(assignment);
-      dispatch(updateAssignment(updated));
+    const [assignment, setAssignment] = useState({
+        title: "",
+        description: "",
+        points: 100,
+        dueDate: "",
+        availableFrom: "",
+        availableUntil: "",
+        course: cid
+    });
+    
+    const [loading, setLoading] = useState(false);
+    const [assignmentNotFound, setAssignmentNotFound] = useState(false);
+
+    useEffect(() => {
+        const fetchAssignments = async () => {
+            try {
+                setLoading(true);
+                if (assignments.length === 0) {
+                    const fetchedAssignments = await assignmentsClient.findAssignmentsForCourse(cid as string);
+                    dispatch(setAssignments(fetchedAssignments));
+                }
+            } catch (error) {
+                console.error("Failed to fetch assignments:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        
+        const fetchSpecificAssignment = async () => {
+            if (aid && !existingAssignment) {
+                try {
+                    setLoading(true);
+                    const fetchedAssignment = await assignmentsClient.findAssignmentById(aid);
+                    if (fetchedAssignment) {
+                        setAssignment({
+                            title: fetchedAssignment.title || "",
+                            description: fetchedAssignment.description || "",
+                            points: fetchedAssignment.points || 100,
+                            dueDate: fetchedAssignment.dueDate || "",
+                            availableFrom: fetchedAssignment.availableFrom || "",
+                            availableUntil: fetchedAssignment.availableUntil || "",
+                            course: fetchedAssignment.course || cid
+                        });
+                        setAssignmentNotFound(false);
+                    } else {
+                        setAssignmentNotFound(true);
+                    }
+                } catch (error) {
+                    console.error("Failed to fetch specific assignment:", error);
+                    setAssignmentNotFound(true);
+                } finally {
+                    setLoading(false);
+                }
+            }
+        };
+        
+        fetchAssignments();
+        fetchSpecificAssignment();
+        
+        if (isEditing && existingAssignment) {
+            setAssignment({
+                title: existingAssignment.title || "",
+                description: existingAssignment.description || "",
+                points: existingAssignment.points || 100,
+                dueDate: existingAssignment.dueDate || "",
+                availableFrom: existingAssignment.availableFrom || "",
+                availableUntil: existingAssignment.availableUntil || "",
+                course: existingAssignment.course || cid
+            });
+        }
+    }, [isEditing, existingAssignment, cid, aid, assignments.length, dispatch]);
+
+    const handleSave = async () => {
+        try {
+            if (isEditing) {
+                const updatedAssignment = { ...assignment, _id: aid };
+                await assignmentsClient.updateAssignment(updatedAssignment);
+                dispatch(updateAssignment(updatedAssignment));
+            } else {
+                const newAssignment = await assignmentsClient.createAssignmentForCourse(cid as string, assignment);
+                dispatch(addAssignment(newAssignment));
+            }
+            navigate(`/Kambaz/Courses/${cid}/Assignments`);
+        } catch (error) {
+            console.error("Failed to save assignment:", error);
+            alert("Failed to save assignment. Please try again.");
+        }
+    };
+
+    const handleCancel = () => {
+        navigate(`/Kambaz/Courses/${cid}/Assignments`);
+    };
+
+    const handleInputChange = (field: string, value: any) => {
+        setAssignment({ ...assignment, [field]: value });
+    };
+
+    if (loading) {
+        return (
+            <div id="wd-assignments-editor">
+                <h3>Loading...</h3>
+            </div>
+        );
     }
-    navigate(getAssignmentsUrl());
-  };
-  return (
-    <div>
-      <label>Assignment Name</label>
-      <div className="mb-4 row">
-        <div>
-          <input
-            id="wd-name"
-            className="form-control w-100"
-            value={assignment.title}
-            onChange={(e) =>
-              setAssignment({ ...assignment, title: e.target.value })
-            }
-            readOnly={!isFaculty}
-          />
-        </div>
-      </div>
-      <div className="mb-4 row">
-        <div>
-          <textarea
-            id="wd-description"
-            className="form-control w-100"
-            rows={5}
-            value={assignment.description}
-            onChange={(e) =>
-              setAssignment({ ...assignment, description: e.target.value })
-            }
-            readOnly={!isFaculty}
-          />
-        </div>
-      </div>
-      <div className="row mb-3 align-items-center">
-        <div className="col-sm-2 text-end">Points</div>
-        <div className="col-sm-10">
-          <input
-            id="wd-points"
-            className="form-control"
-            value={assignment.points}
-            onChange={(e) =>
-              setAssignment({ ...assignment, points: Number(e.target.value) })
-            }
-            readOnly={!isFaculty}
-          />
-        </div>
-      </div>
-      <div className="row mb-3 align-items-center">
-        <div className="col-sm-2 text-end">Assignment Group</div>
-        <div className="col-sm-10">
-          <select
-            id="wd-group"
-            className="form-select"
-            value={assignment.group}
-            onChange={(e) =>
-              setAssignment({ ...assignment, group: e.target.value })
-            }
-            disabled={!isFaculty}
-          >
-            <option value="">Select Group</option>
-            <option>ASSIGNMENTS1</option>
-            <option>ASSIGNMENTS2</option>
-          </select>
-        </div>
-      </div>
-      <div className="row mb-3 align-items-center">
-        <div className="col-sm-2 text-end">Display Grade as</div>
-        <div className="col-sm-10">
-          <select
-            id="wd-display-grade-as"
-            className="form-select"
-            value={assignment.display_grade_as}
-            onChange={(e) =>
-              setAssignment({ ...assignment, display_grade_as: e.target.value })
-            }
-            disabled={!isFaculty}
-          >
-            <option value="">Select</option>
-            <option>Point</option>
-          </select>
-        </div>
-      </div>
-      <div className="row mb-4 align-items-start">
-        <div className="col-sm-2 text-end">Submission Type</div>
-        <div className="col-sm-10">
-          <div className="mb-4 p-4 border rounded">
-            <select
-              id="wd-submission-type"
-              className="form-select"
-              value={assignment.submission_type}
-              onChange={(e) =>
-                setAssignment({
-                  ...assignment,
-                  submission_type: e.target.value,
-                })
-              }
-              disabled={!isFaculty}
-            >
-              <option value="">Select</option>
-              <option>Online</option>
-              <option>Offline</option>
-            </select>
-            <label className="form-label fw-bold mt-2">
-              Online Entry Options
-            </label>
-            <div className="form-check mb-3">
-              <input
-                type="checkbox"
-                id="wd-text-entry"
-                className="form-check-input"
-                disabled={!isFaculty}
-              />
-              <label htmlFor="wd-text-entry" className="form-check-label">
-                Text Entry
-              </label>
-            </div>
-            <div className="form-check mb-3">
-              <input
-                type="checkbox"
-                id="wd-website-url"
-                className="form-check-input"
-                disabled={!isFaculty}
-              />
-              <label htmlFor="wd-website-url" className="form-check-label">
-                Website URL
-              </label>
-            </div>
-            <div className="form-check mb-3">
-              <input
-                type="checkbox"
-                id="wd-media-recordings"
-                className="form-check-input"
-                disabled={!isFaculty}
-              />
-              <label htmlFor="wd-media-recordings" className="form-check-label">
-                Media Recordings
-              </label>
-            </div>
-            <div className="form-check mb-3">
-              <input
-                type="checkbox"
-                id="wd-student-annotations"
-                className="form-check-input"
-                disabled={!isFaculty}
-              />
-              <label
-                htmlFor="wd-student-annotations"
-                className="form-check-label"
-              >
-                Student Annotations
-              </label>
-            </div>
-            <div className="form-check mb-3">
-              <input
-                type="checkbox"
-                id="wd-file-uploads"
-                className="form-check-input"
-                disabled={!isFaculty}
-              />
-              <label htmlFor="wd-file-uploads" className="form-check-label">
-                File Uploads
-              </label>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div className="row mb-4 align-items-start">
-        <div className="col-sm-2 text-end">Assign</div>
-        <div className="col-sm-10">
-          <div className="mb-4 p-4 border rounded">
-            <label className="form-label fw-bold">Assign to</label>
-            <div className="border rounded-lg px-3 py-1 inline-flex items-center bg-gray-100">
-              <button
-                className="btn btn-outline-secondary"
-                disabled={!isFaculty}
-              >
-                {assignment.assign_to} ✕
-              </button>
-            </div>
-            <div className="mt-3">
-              <label className="form-label fw-bold">Due</label>
-              <div className="input-group">
-                <input
-                  type="text"
-                  id="wd-due-date"
-                  className="form-control"
-                  value={assignment.due_date}
-                  onChange={(e) =>
-                    setAssignment({ ...assignment, due_date: e.target.value })
-                  }
-                  readOnly={!isFaculty}
-                />
-                <button
-                  className="btn btn-outline-secondary"
-                  type="button"
-                  disabled={!isFaculty}
-                >
-                  <BsCalendar2Date />
+
+    if (aid && assignmentNotFound) {
+        return (
+            <div id="wd-assignments-editor">
+                <h3>Assignment not found</h3>
+                <button onClick={handleCancel} className="btn btn-secondary">
+                    Back to Assignments
                 </button>
-              </div>
             </div>
-            <div className="row mt-2">
-              <div className="col-md-6">
-                <label className="form-label fw-bold">Available from</label>
-                <div className="input-group">
-                  <input
-                    type="text"
-                    id="wd-available-from"
-                    className="form-control"
-                    value={assignment.available_from}
-                    onChange={(e) =>
-                      setAssignment({
-                        ...assignment,
-                        available_from: e.target.value,
-                      })
-                    }
-                    readOnly={!isFaculty}
-                  />
-                  <button
-                    className="btn btn-outline-secondary"
-                    type="button"
-                    disabled={!isFaculty}
-                  >
-                    <BsCalendar2Date />
-                  </button>
+        );
+    }
+
+    return (
+        <div id="wd-assignments-editor">
+            <h3>{isEditing ? "Edit Assignment" : "New Assignment"}</h3>
+            <Form.Group controlId="wd-name">
+                <Form.Label>Assignment Name</Form.Label>
+                <Form.Control 
+                    type="text" 
+                    value={assignment.title}
+                    onChange={(e) => handleInputChange("title", e.target.value)}
+                />
+            </Form.Group>
+            <Form.Group controlId="wd-description">
+                <Form.Label>Description</Form.Label>
+                <Form.Control 
+                    as="textarea" 
+                    rows={5} 
+                    value={assignment.description}
+                    onChange={(e) => handleInputChange("description", e.target.value)}
+                />
+            </Form.Group>
+            <br />
+            
+            <Form.Group as="div" className="row mb-3">
+                <Form.Label column sm={2} className="text-end" htmlFor="wd-points">
+                    Points
+                </Form.Label>
+                <div className="col-sm-10">
+                    <Form.Control 
+                        id="wd-points" 
+                        type="number" 
+                        value={assignment.points}
+                        onChange={(e) => handleInputChange("points", parseInt(e.target.value) || 0)}
+                    />
                 </div>
-              </div>
-              <div className="col-md-6">
-                <label className="form-label fw-bold">Until</label>
-                <div className="input-group">
-                  <input
-                    type="text"
-                    id="wd-available-until"
-                    className="form-control"
-                    value={assignment.available_until}
-                    onChange={(e) =>
-                      setAssignment({
-                        ...assignment,
-                        available_until: e.target.value,
-                      })
-                    }
-                    readOnly={!isFaculty}
-                  />
-                  <button
-                    className="btn btn-outline-secondary"
-                    type="button"
-                    disabled={!isFaculty}
-                  >
-                    <BsCalendar2Date />
-                  </button>
+            </Form.Group>
+
+            <Form.Group as="div" className="row mb-3">
+                <Form.Label column sm={2} className="text-end" htmlFor="wd-group">
+                    Assignment Group
+                </Form.Label>
+                <div className="col-sm-10">
+                    <Form.Select id="wd-group" defaultValue="assignments">
+                        <option value="assignments">ASSIGNMENTS</option>
+                    </Form.Select>
                 </div>
-              </div>
+            </Form.Group>
+
+            <Form.Group as="div" className="row mb-3">
+                <Form.Label column sm={2} className="text-end" htmlFor="wd-display-grade-as">
+                    Display Grade as
+                </Form.Label>
+                <div className="col-sm-10">
+                    <Form.Select id="wd-display-grade-as" defaultValue="percentage">
+                        <option value="percentage">Percentage</option>
+                        <option value="points">Points</option>
+                        <option value="letter">Letter Grade</option>
+                    </Form.Select>
+                </div>
+            </Form.Group>
+
+            <Form.Group as="div" className="row mb-3">
+                <Form.Label column sm={2} className="text-end align-top" htmlFor="wd-submission-type">
+                    Submission Type
+                </Form.Label>
+                <div className="col-sm-10">
+                    <div className="border p-3">
+                        <Form.Group className="mb-3">
+                            <Form.Select id="wd-submission-type" defaultValue="online">
+                                <option value="online">Online</option>
+                                <option value="in-person">In-Person</option>
+                                <option value="file-upload">File Upload</option>
+                            </Form.Select>
+                        </Form.Group>
+                        
+                        <Form.Label className="fw-bold mb-2">Online Entry Options</Form.Label>
+                        <Form.Check type="checkbox" id="wd-text-entry" label="Text Entry" />
+                        <Form.Check type="checkbox" id="wd-website-url" label="Website URL" />
+                        <Form.Check type="checkbox" id="wd-media-recordings" label="Media Recordings" />
+                        <Form.Check type="checkbox" id="wd-student-annotation" label="Student Annotation" />
+                        <Form.Check type="checkbox" id="wd-file-uploads" label="File Uploads" />
+                    </div>
+                </div>
+            </Form.Group>
+
+            <Form.Group as="div" className="row mb-3">
+                <Form.Label column sm={2} className="text-end align-top" htmlFor="wd-assign">
+                    Assign
+                </Form.Label>
+                <div className="col-sm-10">
+                    <div className="border p-3">
+                        <Form.Group className="mb-3">
+                            <Form.Label htmlFor="wd-assign-to">Assign to</Form.Label>
+                            <Form.Control id="wd-assign-to" type="text" defaultValue="Everyone" />
+                        </Form.Group>
+                        
+                        <Form.Group className="mb-3">
+                            <Form.Label htmlFor="wd-due-date">Due</Form.Label>
+                            <Form.Control 
+                                id="wd-due-date" 
+                                type="date" 
+                                value={assignment.dueDate}
+                                onChange={(e) => handleInputChange("dueDate", e.target.value)}
+                            />
+                        </Form.Group>
+                        
+                        <div className="row">
+                            <div className="col-md-6">
+                                <Form.Group>
+                                    <Form.Label htmlFor="wd-available-from">Available From</Form.Label>
+                                    <Form.Control 
+                                        id="wd-available-from" 
+                                        type="date" 
+                                        value={assignment.availableFrom}
+                                        onChange={(e) => handleInputChange("availableFrom", e.target.value)}
+                                    />
+                                </Form.Group>
+                            </div>
+                            <div className="col-md-6">
+                                <Form.Group>
+                                    <Form.Label htmlFor="wd-available-until">Until</Form.Label>
+                                    <Form.Control 
+                                        id="wd-available-until" 
+                                        type="date" 
+                                        value={assignment.availableUntil}
+                                        onChange={(e) => handleInputChange("availableUntil", e.target.value)}
+                                    />
+                                </Form.Group>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </Form.Group>
+            <hr />
+            <div className="text-end">
+                <button onClick={handleCancel} className="btn btn-secondary me-2">Cancel</button>
+                <button onClick={handleSave} className="btn btn-danger">Save</button>
             </div>
-          </div>
         </div>
-      </div>
-      <hr />
-      <div className="d-flex justify-content-end gap-1">
-        <Link to={getAssignmentsUrl()} className="btn btn-secondary">
-          Cancel
-        </Link>
-        {isFaculty && (
-          <button onClick={saveAssignment} className="btn btn-danger">
-            Save
-          </button>
-        )}
-      </div>
-    </div>
-  );
+    );
 }

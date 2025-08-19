@@ -1,0 +1,353 @@
+import { useParams, useNavigate } from "react-router";
+import { useSelector } from "react-redux";
+import { Button, Dropdown, Form } from "react-bootstrap";
+import { FaPlus } from "react-icons/fa";
+import { useState, useEffect, useRef } from "react";
+import * as questionsClient from "./questionsClient";
+import QuestionPreview from "./QuestionPreview";
+
+export default function QuestionEditor() {
+    const { qid, cid } = useParams();
+    const navigate = useNavigate();
+    const { quizzes } = useSelector((state: any) => state.quizzesReducer);
+    const quiz = quizzes.find((q: any) => q._id === qid);
+    const [questions, setQuestions] = useState<any[]>([]);
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [editData, setEditData] = useState<any | null>(null);
+    const [isNew, setIsNew] = useState(false);
+    const questionsEndRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const fetchQuestions = async () => {
+            if (qid) {
+                try {
+                    const questions = await questionsClient.findQuestionsForQuiz(qid);
+                    setQuestions(questions);
+                } catch (error) {
+                    setQuestions([]);
+                }
+            }
+        };
+        fetchQuestions();
+    }, [qid]);
+
+    const handleEditQuestion = (questionId: string) => {
+        const question = questions.find(q => q._id === questionId);
+        if (question) {
+            setEditingId(questionId);
+            setEditData({ ...question });
+            setIsNew(false);
+        }
+    };
+
+    const handleAddQuestion = async () => {
+        if (!qid) return;
+        const newQuestion = {
+            title: "",
+            questionDescription: "",
+            questionType: "MultipleChoice",
+            points: 1,
+            answers: ["", ""],
+            correctAnswers: [],
+        };
+        setEditingId("new");
+        setEditData(newQuestion);
+        setIsNew(true);
+        setTimeout(scrollToBottom, 100);
+    };
+
+    const scrollToBottom = () => {
+        questionsEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+
+    const handleDeleteQuestion = async (questionId: string) => {
+        const confirmDelete = window.confirm("Are you sure you want to delete this question?");
+        if (confirmDelete) {
+            try {
+                await questionsClient.deleteQuestion(questionId);
+                setQuestions(questions.filter(q => q._id !== questionId));
+            } catch (error) {
+            }
+        }
+    };
+
+    const handleCancelEdit = () => {
+        setEditingId(null);
+        setEditData(null);
+        setIsNew(false);
+    };
+
+    const handleCancelAll = async () => {
+        const confirmCancel = window.confirm("Are you sure you want to delete all questions? This action cannot be undone.");
+        if (confirmCancel) {
+            try {
+                for (const question of questions) {
+                    await questionsClient.deleteQuestion(question._id);
+                }
+                setQuestions([]);
+                setEditingId(null);
+                setEditData(null);
+                setIsNew(false);
+                navigate(`/Kambaz/Courses/${cid}/Quizzes/${qid}/Editor`);
+            } catch (error) {
+                console.error("Failed to delete questions:", error);
+                alert("Failed to delete questions. Please try again.");
+            }
+        }
+    };
+
+    const handleSaveAndRedirect = () => {
+        navigate(`/Kambaz/Courses/${cid}/Quizzes/${qid}`);
+    };
+
+    const handleSaveOrUpdate = async () => {
+        if (!qid || !editData) return;
+        let payload = { ...editData };
+        if (payload.questionType === "Multiple Choice") payload.questionType = "MultipleChoice";
+        if (payload.questionType === "True/False") payload.questionType = "True/False";
+        if (payload.questionType === "FillInBlank") payload.questionType = "FillInBlank";
+        if (Array.isArray(payload.answers)) {
+            payload.answers = payload.answers.map((a: any) => typeof a === "string" ? a : (a.text ?? ""));
+        }
+        if (payload.questionType === "True/False") {
+            payload.answers = ["True", "False"];
+            payload.correctAnswers = [payload.correctAnswers[0] ?? "True"];
+        } else if (payload.questionType === "FillInBlank") {
+            payload.answers = [""];
+            payload.correctAnswers = payload.correctAnswers.filter((a: any) => a !== "");
+        } else if (payload.questionType === "MultipleChoice") {
+            payload.correctAnswers = payload.correctAnswers[0] ? [payload.correctAnswers[0]] : [];
+        }
+        try {
+            let saved;
+            if (isNew) {
+                saved = await questionsClient.createQuestionForQuiz(qid, payload);
+                setQuestions([...questions, saved]);
+            } else {
+                await questionsClient.updateQuestion(editingId!, payload);
+                setQuestions(questions.map(q => q._id === editingId ? payload : q));
+            }
+            handleCancelEdit();
+        } catch (error) {
+        }
+    };
+
+    const renderEditForm = () => {
+        if (!editData) return null;
+        const questionType = editData.questionType;
+        return (
+            <div className="border rounded p-4 mb-4" style={{ background: '#f9f9f9' }}>
+                <div className="d-flex align-items-center mb-3">
+                    <Dropdown className="me-3">
+                        <Form.Label className="me-2 fw-bold">Question Type:</Form.Label>
+                        <Dropdown.Toggle variant="outline-secondary" id="dropdown-question-type">
+                            {questionType}
+                        </Dropdown.Toggle>
+                        <Dropdown.Menu>
+                            {["MultipleChoice", "True/False", "FillInBlank"].map(type => (
+                                <Dropdown.Item key={type} onClick={() => {
+                                    let newData = { ...editData, questionType: type };
+                                    if (type === "True/False") {
+                                        newData.answers = ["True", "False"];
+                                        newData.correctAnswers = ["True"];
+                                    } else if (type === "FillInBlank") {
+                                        newData.answers = [""];
+                                        newData.correctAnswers = [""];
+                                    } else if (type === "MultipleChoice") {
+                                        newData.answers = ["", ""];
+                                        newData.correctAnswers = [""];
+                                    }
+                                    setEditData(newData);
+                                }}>{type}</Dropdown.Item>
+                            ))}
+                        </Dropdown.Menu>
+                    </Dropdown>
+                    <Form.Label className="me-2 fw-bold">Points:</Form.Label>
+                    <Form.Control type="number" style={{ width: 80 }} value={editData.points ?? 1} min={1} onChange={e => setEditData({ ...editData, points: Number(e.target.value) })} />
+                </div>
+                <hr />
+                <div className="mb-2 text-muted">Enter your question and answers, then select the correct answer(s)</div>
+                <div className="fw-bold mb-1" style={{ fontSize: '1.2rem' }}>Question Title:</div>
+                <Form.Control className="mb-3" type="text" placeholder="Enter question title" value={editData.title ?? ""} onChange={e => setEditData({ ...editData, title: e.target.value })} />
+                <div className="fw-bold mb-1" style={{ fontSize: '1.2rem' }}>Question Description:</div>
+                <Form.Control 
+                    as="textarea" 
+                    rows={3} 
+                    className="mb-3" 
+                    placeholder="Enter the question description/prompt that students will see" 
+                    value={editData.questionDescription ?? ""} 
+                    onChange={e => setEditData({ ...editData, questionDescription: e.target.value })} 
+                />
+                {questionType === "MultipleChoice" && (
+                    <>
+                        <div className="fw-bold mb-1" style={{ fontSize: '1.2rem' }}>Answers:</div>
+                        {editData.answers.map((answer: string, idx: number) => (
+                            <div key={idx} className="d-flex align-items-center mb-2">
+                                <Form.Check 
+                                    type="radio" 
+                                    name={`correctAnswer-${editingId || 'new'}`} 
+                                    checked={editData.correctAnswers[0] === answer} 
+                                    onChange={() => {
+                                        setEditData({ ...editData, correctAnswers: [answer] });
+                                    }} 
+                                    className="me-2" 
+                                />
+                                <Form.Control type="text" value={answer ?? ""} placeholder={`Answer ${idx + 1}`} style={{ width: '300px' }} onChange={e => {
+                                    const newAnswers = editData.answers.map((a: string, i: number) => i === idx ? e.target.value : a);
+                                    // If answer text changes, update correctAnswers too
+                                    let correctAnswers = editData.correctAnswers;
+                                    if (editData.correctAnswers[0] === answer) {
+                                        correctAnswers = [e.target.value];
+                                    }
+                                    setEditData({ ...editData, answers: newAnswers, correctAnswers });
+                                }} />
+                                <Button variant="outline-danger" size="sm" className="ms-2" onClick={() => {
+                                    const newAnswers = editData.answers.filter((_: string, i: number) => i !== idx);
+                                    let correctAnswers = editData.correctAnswers;
+                                    if (editData.correctAnswers[0] === answer) {
+                                        correctAnswers = [];
+                                    }
+                                    setEditData({ ...editData, answers: newAnswers, correctAnswers });
+                                }} disabled={editData.answers.length <= 2}>Remove</Button>
+                                {editData.correctAnswers[0] === answer && (
+                                    <span className="text-success ms-2 fw-bold">✓ Correct Answer</span>
+                                )}
+                            </div>
+                        ))}
+                        <div className="d-flex justify-content-end">
+                            <Button variant="outline-success" size="sm" onClick={() => setEditData({
+                                ...editData,
+                                answers: [...editData.answers, ""]
+                            })}>
+                                + Add Another Answer
+                            </Button>
+                        </div>
+                    </>
+                )}
+                {questionType === "True/False" && (
+                    <>
+                        <div className="fw-bold mb-1" style={{ fontSize: '1.2rem' }}>Answers:</div>
+                        <div className="d-flex gap-3 mb-2">
+                            {["True", "False"].map((val) => (
+                                <div key={val} className="d-flex align-items-center" style={{ flex: "1 1 0" }}>
+                                    <Form.Check
+                                        type="radio"
+                                        label={val}
+                                        name={`correctAnswer-${editingId || 'new'}`}
+                                        checked={editData.correctAnswers[0] === val}
+                                        onChange={() => setEditData({ ...editData, correctAnswers: [val] })}
+                                    />
+                                    {editData.correctAnswers[0] === val && (
+                                        <span className="text-success ms-2 fw-bold">✓ Correct Answer</span>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </>
+                )}
+                {questionType === "FillInBlank" && (
+                    <>
+                        <div className="fw-bold mb-1" style={{ fontSize: '1.2rem' }}>Answers:</div>
+                        {editData.correctAnswers.map((answer: string, idx: number) => (
+                            <div key={idx} className="d-flex align-items-center mb-2">
+                                <Form.Label className="me-2">Possible Answer: </Form.Label>
+                                <Form.Control type="text" value={answer ?? ""} placeholder={`Correct Answer ${idx + 1}`} style={{ width: '250px' }} onChange={e => {
+                                    const newCorrectAnswers = editData.correctAnswers.map((a: string, i: number) => i === idx ? e.target.value : a);
+                                    setEditData({ ...editData, correctAnswers: newCorrectAnswers });
+                                }} />
+                                <Button variant="outline-danger" size="sm" className="ms-2" onClick={() => {
+                                    const newCorrectAnswers = editData.correctAnswers.filter((_: string, i: number) => i !== idx);
+                                    setEditData({ ...editData, correctAnswers: newCorrectAnswers });
+                                }} disabled={editData.correctAnswers.length <= 1}>Remove</Button>
+                            </div>
+                        ))}
+                        <div className="d-flex justify-content-end">
+                            <Button variant="outline-success" size="sm" onClick={() => setEditData({
+                                ...editData,
+                                correctAnswers: [...editData.correctAnswers, ""]
+                            })}>
+                                + Add Another Correct Answer
+                            </Button>
+                        </div>
+                    </>
+                )}
+                <div className="d-flex justify-content-end mt-4 gap-2">
+                    <Button variant="secondary" onClick={handleCancelEdit}>Cancel</Button>
+                    <Button variant="primary" onClick={handleSaveOrUpdate}>{isNew ? "Save" : "Update"}</Button>
+                </div>
+            </div>
+        );
+    };
+
+    if (!quiz) {
+        return (
+            <div className="text-center p-4">
+                Loading quiz...
+            </div>
+        );
+    }
+
+    return (
+        <div id="wd-question-editor" className="p-3">
+            <div className="d-flex justify-content-center mb-4">
+                <Button
+                    variant="light"
+                    size="lg"
+                    onClick={handleAddQuestion}
+                    className="d-flex align-items-center border"
+                >
+                    <FaPlus className="me-2" />
+                    New Question
+                </Button>
+            </div>
+
+            {questions.map((question) => (
+                <div key={question._id} className="mb-4">
+                    {editingId === question._id ? (
+                        renderEditForm()
+                    ) : (
+                        <QuestionPreview
+                            questions={[question]}
+                            onEdit={handleEditQuestion}
+                            onDelete={handleDeleteQuestion}
+                            isPreviewMode={false}
+                            globalQuestions={questions}
+                        />
+                    )}
+                </div>
+            ))}
+
+            {editingId === "new" && (
+                <div className="mb-4">
+                    <h5 className="mb-2">New Question</h5>
+                    {renderEditForm()}
+                </div>
+            )}
+
+            {questions.length === 0 && editingId !== "new" && (
+                <div className="text-center p-5 border border-dashed rounded">
+                    <p className="text-muted mb-3">No questions yet.</p>
+                    <p className="text-muted">Click "New Question" to add your first question.</p>
+                </div>
+            )}
+
+            <hr />
+            <div className="text-end">
+                <button 
+                    onClick={handleCancelAll} 
+                    className="btn btn-secondary me-2"
+                >
+                    Cancel
+                </button>
+                <button 
+                    onClick={handleSaveAndRedirect} 
+                    className="btn btn-warning"
+                >
+                    Save
+                </button>
+            </div>
+
+            <div ref={questionsEndRef} />
+        </div>
+    );
+}
